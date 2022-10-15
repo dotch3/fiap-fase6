@@ -1,15 +1,21 @@
-import json
 import sys
+sys.path.insert(0, "/Users/dotch3/Documents/Coding/Fiap/fase6")
+import time
 from array import array
 from datetime import date, datetime
-from random import randint
+from AVL import AVLTree
 
-from faker import Faker
-from faker.providers import internet, person
+start_time = time.time()
+
+# include project's root path
+from DataManager.manager_db import Connect
+from Utils.env import DB_FILE_PATH
+from Utils.menu_utils import make_fake_children, make_fake_user
 
 
 class UserModel:
     table_name = "T_PERSON"
+    id_name="id"
     TYPE_USERS = "Funcionario, Voluntario, Doador, Atendido, Visitante"
     #  Uma pessoa pode pertencer a mais de uma categoria, no entanto, os Atendidos não podem ser doadores ou funcionários.
 
@@ -46,42 +52,69 @@ class UserModel:
         self.updated_at = updated_at
 
     def __str__(self):
-        return f"user: {self.id}: {self.first_name} - {self.last_name}. children {self.children}"
+        if len(self.children)>0:
+            return f"user: {self.id}: {self.first_name} - {self.last_name}. children {self.children[0]}"
+        else:
+            return f"user: {self.id}: {self.first_name} - {self.last_name}"
 
-    def create_user(
-        self,
-        id=None,
-        first_name=None,
-        last_name=None,
-        birthday=None,
-        age=None,
-        num_cpf=None,
-        num_rg=None,
-        type_user=None,
-        children=None,
-        fam_income=None,
-        phone=None,
-        cellphone=None,
-        created_at=None,
-        updated_at=None,
-    ):
+    def create_user(my_user):
+        my_conn = Connect(DB_FILE_PATH)
+        print(my_user.first_name)
+        
+        print("test children")
+        child_aux="my children"
+        print(type(my_user.children))
+        str_op = 'INSERT INTO  T_PERSON (id, first_name, last_name,birthday,age,num_cpf,num_rg,type_user,children,fam_income,phone,cellphone,created_at,updated_at)'
+      
+        insert_query = str_op + 'VALUES (\"'+ str(my_user.id)+'\",' +'\"'+ str(my_user.first_name)+'\",' +'\"'+ str(my_user.last_name)+'\",' +'\"'+ str(my_user.birthday)+'\",' +'\"'+ str(my_user.age)+'\",' +'\"'+ str(my_user.num_cpf)+'\",' +'\"'+ str(my_user.num_rg)+'\",' +'\"'+ str(my_user.type_user)+'\",' +'\"'+ str(child_aux)+'\",' +'\"'+ str(my_user.fam_income)+'\",' +'\"'+ str(my_user.phone)+'\",' +'\"'+ str(my_user.cellphone)+'\",' +'\"'+ str(my_user.created_at)+'\",' +'\"'+ str(my_user.updated_at)+'\");'
+     
+            
+        print(insert_query)
+        my_conn.insert_register(data_query=insert_query)
+    
+    @staticmethod
+    def get_users():
+        table_name = "T_PERSON"
+        id_name="id"
+        my_conn = Connect(DB_FILE_PATH)
+        users = my_conn.get_all_data(table=table_name,id_name=id_name)
+        return users
+    
+    @staticmethod    
+    def find_user_database(usr_id):
+        table_name = "T_PERSON"
+        id_name="id"
+        my_conn = Connect(DB_FILE_PATH)
+        usr= my_conn.get_item(table=table_name,id_item=usr_id,id_name=id_name)
+        # print(usr)
+        return usr
 
-        return UserModel(
-            id=id,
-            first_name=first_name,
-            last_name=last_name,
-            birthday=birthday,
-            age=age,
-            num_cpf=num_cpf,
-            num_rg=num_rg,
-            type_user=type_user,
-            children=children,
-            fam_income=fam_income,
-            phone=phone,
-            cellphone=cellphone,
-            created_at=created_at,
-            updated_at=updated_at,
-        )
+    @staticmethod
+    def find_user(usr_id):
+        table_name = "T_PERSON"
+        id_name="id"
+        found=None
+        my_conn = Connect(DB_FILE_PATH)
+        dict_usr= my_conn.get_all_data(table=table_name,id_name=id_name)
+        # print(dict_usr)
+        for item in dict_usr:
+            if item["id"]==usr_id:
+                found=item
+        return found
+
+    @staticmethod
+    def sort_avl():
+        Tree = AVLTree()
+        dict_data=UserModel.get_users()
+        root= None
+        key="id"
+        dict_len=len(dict_data)
+        
+        if dict_len > 1:
+            for item in dict_data:
+                root=Tree.insert(root,int(item[key]))
+        Tree.preOrder(root)
+
 
     @classmethod
     def criar_funcionario(
@@ -101,7 +134,7 @@ class UserModel:
         created_at=None,
         updated_at=None,
     ):
-        """ """
+
         return UserModel(
             id=id,
             first_name=first_name,
@@ -119,13 +152,13 @@ class UserModel:
             updated_at=updated_at,
         )
 
-
 class ChildModel:
     table_name = "T_CHILD"
 
     def __init__(
         self,
-        id: None,
+        id:None,
+        parent_id: None,
         name: None,
         age: None,
         student: None,
@@ -135,6 +168,7 @@ class ChildModel:
         updated_at: datetime,
     ) -> None:
         self.id = id
+        self.parent_id=parent_id
         self.name = name
         self.age = age
         self.student = student
@@ -144,22 +178,24 @@ class ChildModel:
         self.updated_at = updated_at
 
     def __str__(self):
-        return f" child: {self.name} - {self.age} "
+        return f" child: {self.name} - {self.age} <> Parent: {self.parent_id}"
 
     def create_children(
         self,
         id=None,
+        parent_id=None,
         name=None,
         age=None,
         student=None,
         employed=None,
         date_last_job=None,
-        created_at=None,
-        updated_at=None,
+        created_at=str(datetime.now()),
+        updated_at=str(datetime.now()),
     ):
 
         return ChildModel(
             id=id,
+            parent_id=parent_id,
             name=name,
             age=age,
             student=student,
@@ -169,55 +205,16 @@ class ChildModel:
             updated_at=updated_at,
         )
 
-
-def make_fake_user():
-    fake = Faker("pt_BR")
-    child_array = [
-        # name, age,student,worker,lastdayJob
-        ["joao", "20", "student", None, None],
-        ["Maria", "11", "student", None, None],
-        ["Dolly", "23", None, "employed", datetime.now()],
-    ]
-    fake_user_json = {
-        "id": fake.random_number(digits=2, fix_len=True),
-        "first_name": fake.first_name(),
-        "last_name": fake.last_name(),
-        "birthday": fake.date_between_dates(),
-        "age": fake.pyint(0, 99, 1),
-        "num_cpf": fake.cpf(),
-        "num_rg": fake.rg(),
-        "type_user": fake.pyint(0, 5, 1),
-        "children": make_fake_children(),
-        "fam_income": fake.random_number(digits=4, fix_len=True),
-        "phone": fake.phone_number(),
-        "cellphone": fake.cellphone_number(),
-        "created_at": str(datetime.now()),
-        "updated_at": str(datetime.now()),
-    }
-
-    return fake_user_json
-
-
-def make_fake_children():
-    fake = Faker("pt_BR")
-    arr_child = []
-    for n in range(randint(0, 4)):  # top 4 children
-        fake_children_json = {
-            "id": fake.random_number(digits=2, fix_len=True),
-            "name": fake.name(),
-            "age": fake.pyint(0, 5, 1),
-            "student": fake.pybool(),
-            "employed": fake.pybool(),
-            "created_at": str(datetime.now()),
-            "updated_at": str(datetime.now()),
-        }
-        arr_child.append(fake_children_json)
-    return arr_child
-
-
 # print(make_fake_user())
 
 if __name__ == "__main__":
+    import time
+    start_time = time.time()
+    print("\n*****_____STATS____*****\n")
+
+
+    # for f in range (0,5):
+        
     fake_data = make_fake_user()
     my_user = UserModel(
         id=fake_data["id"],
@@ -235,4 +232,27 @@ if __name__ == "__main__":
         created_at=fake_data["created_at"],
         updated_at=fake_data["updated_at"],
     )
-    print(str(my_user))
+    # print(str(my_user))
+    
+    my_user.create_user()    
+    print("\nCREATE USER: --- %s seconds ---" % (time.time() - start_time))
+    
+    #  
+    print(my_user.get_users())
+    print(f"\nGET ALL USERS:--- %s seconds ---" % (time.time() - start_time))
+    
+    #
+    print(f"found database {my_user.find_user_database(223)}")
+    print("\nFIND_IN DATABASE:--- %s seconds ---\n" % (time.time() - start_time))
+    
+    #
+    print(f"found memmory {my_user.find_user(usr_id=223)}")
+    print("\nFIND_IN_MEMORY:--- %s seconds ---\n" % (time.time() - start_time))
+    
+     #
+    print(f"AVL() {my_user.sort_avl()}")
+    print("\nSORT DATA AVL:--- %s seconds ---\n" % (time.time() - start_time))
+    
+
+
+    print("FINAL STATS:--- %s seconds ---" % (time.time() - start_time))

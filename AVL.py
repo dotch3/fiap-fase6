@@ -1,106 +1,117 @@
 class treeNode(object):
-	def __init__(self, value):
-		self.value = value
-		self.l = None
-		self.r = None
-		self.h = 1
+    def __init__(self, value):
+        self.value = value
+        self.l = None
+        self.r = None
+        self.h = 1
 
 
-class  AVLTree(object):
+class AVLTree(object):
 
-	def insert(self, root, key):
-	
-		if not root:
-			return treeNode(key)
-		elif key < root.value:
-			root.l = self.insert(root.l, key)
-		else:
-			root.r = self.insert(root.r, key)
+    def insert(self, root, key):
 
-		root.h = 1 + max(self.getHeight(root.l),
-						self.getHeight(root.r))
+        if not root:
+            return treeNode(key)
+        elif key < root.value:
+            root.l = self.insert(root.l, key)
+        else:
+            root.r = self.insert(root.r, key)
 
-		b = self.getBal(root)
+        root.h = 1 + max(self.getHeight(root.l),
+                         self.getHeight(root.r))
 
-		if b > 1 and key < root.l.value:
-			return self.rRotate(root)
+        b = self.getBal(root)
 
-		if b < -1 and key > root.r.value:
-			return self.lRotate(root)
+        if b > 1 and key < root.l.value:
+            return self.rRotate(root)
 
-		if b > 1 and key > root.l.value:
-			root.l = self.lRotate(root.l)
-			return self.rRotate(root)
+        if b < -1 and key > root.r.value:
+            return self.lRotate(root)
 
-		if b < -1 and key < root.r.value:
-			root.r = self.rRotate(root.r)
-			return self.lRotate(root)
+        if b > 1 and key > root.l.value:
+            root.l = self.lRotate(root.l)
+            return self.rRotate(root)
 
-		return root
+        if b < -1 and key < root.r.value:
+            root.r = self.rRotate(root.r)
+            return self.lRotate(root)
 
-	def lRotate(self, z):
+        return root
 
-		y = z.r
-		T2 = y.l
+    def lRotate(self, z):
 
-		y.l = z
-		z.r = T2
+        y = z.r
+        T2 = y.l
 
-		z.h = 1 + max(self.getHeight(z.l),
-						self.getHeight(z.r))
-		y.h = 1 + max(self.getHeight(y.l),
-						self.getHeight(y.r))
+        y.l = z
+        z.r = T2
 
-		return y
+        z.h = 1 + max(self.getHeight(z.l),
+                      self.getHeight(z.r))
+        y.h = 1 + max(self.getHeight(y.l),
+                      self.getHeight(y.r))
 
-	def rRotate(self, z):
+        return y
 
-		y = z.l
-		T3 = y.r
+    def rRotate(self, z):
 
-		y.r = z
-		z.l = T3
+        y = z.l
+        T3 = y.r
 
-		z.h = 1 + max(self.getHeight(z.l),
-						self.getHeight(z.r))
-		y.h = 1 + max(self.getHeight(y.l),
-						self.getHeight(y.r))
+        y.r = z
+        z.l = T3
 
-		return y
+        z.h = 1 + max(self.getHeight(z.l),
+                      self.getHeight(z.r))
+        y.h = 1 + max(self.getHeight(y.l),
+                      self.getHeight(y.r))
 
-	def getHeight(self, root):
-		if not root:
-			return 0
+        return y
 
-		return root.h
+    def getHeight(self, root):
+        if not root:
+            return 0
 
-	def getBal(self, root):
-		if not root:
-			return 0
+        return root.h
 
-		return self.getHeight(root.l) - self.getHeight(root.r)
+    def getBal(self, root):
+        if not root:
+            return 0
 
-	def preOrder(self, root):
+        return self.getHeight(root.l) - self.getHeight(root.r)
 
-		if not root:
-			return
+    def preOrder(self, root):
 
-		print("{0} ".format(root.value), end="")
-		self.preOrder(root.l)
-		self.preOrder(root.r)
+        if not root:
+            return
 
-Tree = AVLTree()
-root = None
+        print("{0} ".format(root.value), end="")
+        self.preOrder(root.l)
+        self.preOrder(root.r)
 
-root = Tree.insert(root, 1)
-root = Tree.insert(root, 2)
-root = Tree.insert(root, 3)
-root = Tree.insert(root, 4)
-root = Tree.insert(root, 5)
-root = Tree.insert(root, 6)
 
-# Preorder Traversal
-print("Preorder traversal of the",
-	"constructed AVL tree is")
-Tree.preOrder(root)
-print()
+    def insert_dictionary(self, root, dict_data,key):
+        dict_len=len(dict_data)
+        print(root,key,dict_len)
+        if dict_len > 1:
+            for item in dict_data:
+                print(item[key])
+                self.insert(root,item[key])
+        return root
+                
+
+# print("search AVL()")
+# Tree = AVLTree()
+# root = None
+
+# root = Tree.insert(root, 1)
+# root = Tree.insert(root, 2)
+# root = Tree.insert(root, 3)
+# root = Tree.insert(root, 4)
+# root = Tree.insert(root, 5)
+# root = Tree.insert(root, 6)
+
+# # Preorder Traversal
+# print("Preorder traversal of the",	"constructed AVL tree is")
+# Tree.preOrder(root)
+# print()

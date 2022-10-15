@@ -1,10 +1,13 @@
 from datetime import date, datetime
+from random import randint
 from uuid import uuid4
 
+from AVL import AVLTree
 from DataManager.manager_db import Connect
 from model.person import ChildModel, UserModel
 from Utils.env import DB_FILE_PATH
-from Utils.menu_utils import (child_options, menu_children, menu_options,
+from Utils.menu_utils import (child_options, make_fake_children,
+                              make_fake_user, menu_children, menu_options,
                               menu_txt)
 
 tb_name = "T_PERSON"
@@ -60,16 +63,16 @@ class DesktopMenu:
             elif option == 1:
                 # Add person
                 print("Insira os dados")
-                id = (uuid4().hex,)
-                # first_name = input("Nome: ")
-                # last_name = input("Sobrenome: ")
-                # birthday = input("Aniversario (dd/mm/aaaa): ")
-                # age = self.calc_age(birthday)
-                # num_cpf = input("CPF: ")
-                # num_rg = input("RG: ")
+                id = input("ID:")
+                first_name = input("Nome: ")
+                last_name = input("Sobrenome: ")
+                birthday = input("Aniversario (dd/mm/aaaa): ")
+                age = self.calc_age(birthday)
+                num_cpf = input("CPF: ")
+                num_rg = input("RG: ")
                 type_user =   (
                         input(
-                            "Categoria: <0> Funcionario, <1>Voluntario, <2> Doador, <3> Atendido, <4>Visitante"
+                            "Categoria:\n <0>Funcionario\n <1>Voluntario\n <2> Doador\n <3> Atendido\n <4>Visitante\n"
                         )
                     )
                 
@@ -101,15 +104,73 @@ class DesktopMenu:
                         updated_at=updated_at,
                     )
                     my_user.create_user()
+                    
+                    
 
                 except Exception as e:
                     print("error:", e)
 
             elif option == 2:
-                print("search by id")
+                print("search by id <DATABASE>")
+                usr_id=input("Enter the user id to find:")
+                
+                my_usr=UserModel.find_user_database(usr_id=usr_id)
+                if my_usr:
+                    print(f"\nFound {my_usr}\n")
+                else:
+                    print(f"\nNot found user with id: {usr_id}")
             elif option == 3:
+                print("search by id <MEMORY>")
+                usr_id=input("Enter the user id to find:")
+                my_usr=UserModel.find_user(usr_id=usr_id)
+                if my_usr:
+                    print(f"\nFound {my_usr}\n")
+                else:
+                    print(f"\nNot found user with id: {usr_id}")
+            elif option == 4:
                 print("search AVL()")
+                Tree = AVLTree()
+                dict_data=UserModel.get_users()
+                root= None
+                key="id"
+                dict_len=len(dict_data)
 
+                if dict_len > 1:
+                    for item in dict_data:
+                        root=Tree.insert(root,int(item[key]))
+                Tree.preOrder(root)
+                print("\nALV end")
+            elif option == 5:
+                print("Get All")
+                users=UserModel.get_users()
+                for i in users:
+                    print(f"{i['id']} {i['first_name']} {i['last_name']}\n")
+                    
+            elif option == 6:
+                print("Create using Fake")
+                qty=input("How many users I will create? ")
+                print(f"to create: {qty}")
+                for i in range(int(qty)):
+                    print(f"user {i}")
+                    fake_data = make_fake_user()
+                    my_user = UserModel(
+                        id=fake_data["id"],
+                        first_name=fake_data["first_name"],
+                        last_name=fake_data["last_name"],
+                        birthday=fake_data["birthday"],
+                        age=fake_data["age"],
+                        num_cpf=fake_data["num_cpf"],
+                        num_rg=fake_data["num_rg"],
+                        type_user=fake_data["type_user"],
+                        children=fake_data["children"],
+                        fam_income=fake_data["fam_income"],
+                        phone=fake_data["phone"],
+                        cellphone=fake_data["cellphone"],
+                        created_at=fake_data["created_at"],
+                        updated_at=fake_data["updated_at"],
+                    )
+                    my_user.create_user()    
+                # print(my_user.get_users())
             else:
                 print("Invalid Option ")
 
@@ -139,55 +200,47 @@ class DesktopMenu:
 
             if choice not in menu_options:
                 print("")
-        if role == "child":
-            print(menu_children)
-            choice = input("Enter your choice: ")
-            print()
-
-            if choice not in child_options:
-                print("")
-
         return choice
 
     def has_children(self, parent_id):
-        # print(
-        #     "\n*******************************************************************************************"
-        # )
-        # print(f"\t\t\tMENU CHILD")
-
-        # print(
-        #     "*******************************************************************************************"
-        # )
-        role = "child"
         arr_child = []
-        self.show_menu(role)
-        child_option = input(f"Child: Escolha uma das seguintes opções ").strip()
-        print()
+        print(menu_children)
+        child_option = input("Enter your choice: ").strip()
 
-        if child_option not in child_options:
-            print("")
+        # print()
+        if child_option.isnumeric():
+             child_option = int(child_option)
+             
+             
+        if child_option == 0:
+             print("")
         elif child_option == 1:
             parent_id = parent_id
-            name = input("Nome: ")
+            print("****************************\n")
+            name = input("Nome (child): ")
             age = input("Idade: ")
-            student = input("Estudante?: <0> NAO, <1> SIM")
-            employed = input("Empregado?: <0> NAO, <1> SIM")
+            student = input("Estudante?:\n \t<0> NAO\n,\t <1> SIM\n")
+            employed = input("Empregado?:\n \t<0> NAO\n, \t<1> SIM\n")
             date_last_job = input("Data do ultimo emprego (dd/mm/aaaa): ")
 
             my_child = ChildModel(
-                parentId=parent_id,
+                id=(uuid4().hex),
+                parent_id=parent_id,
                 name=name,
                 age=age,
                 student=student,
                 employed=employed,
                 date_last_job=date_last_job,
+                created_at=datetime.now().isoformat(),
+                updated_at=datetime.now().isoformat()
             )
 
             arr_child.append(my_child)
+        else:
+            print ("no childs to add")
         return arr_child
         # Send to database
-
-
+    
 if __name__ == "__main__":
     birthday = "14/05/1985"
     r = DesktopMenu()

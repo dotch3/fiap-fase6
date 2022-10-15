@@ -76,7 +76,7 @@ class Connect(object):
             sql = f"SELECT * FROM {table} ORDER BY {id_name};"
         else:
             sql = f"SELECT * FROM {table};"
-        print(sql)
+        # print(sql)
         # In order to jsonify the dictionary, is needed to call it inside the app_context
 
         conn = self.create_connexion(self.db_file_path)
@@ -87,14 +87,13 @@ class Connect(object):
         ITEMS = cursor.fetchall()
 
         dict_items = json.dumps([dict(ix) for ix in ITEMS])
-        print(dict_items)
+        # print(dict_items)
         dict_items = json.loads(dict_items)
-        dict_items = jsonify(dict_items)
-        print("jsonify")
-        print(dict_items)
-        qtd = len(dict_items)
 
-        print("End of get_data_service ")
+        # print(dict_items)
+        # qtd = len(dict_items)
+
+        # print("End of get_data_service ")
         return dict_items
 
     def get_item(self, table=None, id_item=None, id_name=None):
@@ -107,31 +106,22 @@ class Connect(object):
             sql = f"SELECT * FROM {table}  WHERE {id_name}={id_item};"
         print(sql)
         # In order to jsonify the dictionary, is needed to call it inside the app_context
-        app = Flask(__name__)
 
-        with app.app_context():
-            conn = self.create_connexion(self.db_file_path)
-            try:
-                conn.row_factory = sqlite3.Row
-                cursor = conn.cursor()
-                row = cursor.execute(sql)
-                # row = row.fetchone()
-                # print(row)
-                ITEMS = cursor.fetchall()
-                dict_items = json.dumps([dict(ix) for ix in ITEMS])
-                print(dict_items)
-                dict_items = json.loads(dict_items)
-                dict_items = jsonify(dict_items)
-
-                content_range = "items 0-" + str(100) + "/" + str(100)
-                # Configuring the headers for the response
-                dict_items.headers["Access-Control-Allow-Origin"] = "*"
-                dict_items.headers["Access-Control-Expose-Headers"] = "Content-Range"
-                dict_items.headers["Content-Range"] = content_range
-                print("End of get_item_service ")
-                return dict_items
-            except sqlite3.Error as e:
-                print(f"Error encontrado: {e}")
+        conn = self.create_connexion(self.db_file_path)
+        try:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute(sql)
+            # row = row.fetchone()
+            # print(row)
+            ITEMS = cursor.fetchall()
+            dict_items = json.dumps([dict(ix) for ix in ITEMS])
+            # print(dict_items)
+            dict_items = json.loads(dict_items)
+           
+            return dict_items
+        except sqlite3.Error as e:
+            print(f"Error encontrado: {e}")
 
     def delete_item(self, table, id_item=None, id_name=None):
         print("Manager:delete_item")
@@ -196,7 +186,7 @@ class Connect(object):
             print(f"Error encontrado: {e}")
 
     # insert_one_register
-    def insert_register(self, data_query):
+    def insert_register(self, data_query=None):
         print(f"insert_register")
         conn = self.create_connexion(self.db_file_path)
         cursor = conn.cursor()
